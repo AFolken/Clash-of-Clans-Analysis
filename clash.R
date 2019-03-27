@@ -1,3 +1,4 @@
+rm(list = ls())
 library(plotly)
 library(readxl)
 clash_troops <- read_excel("H:/My Documents/clash.xlsx",sheet = "Troops")
@@ -6,7 +7,7 @@ clash_heros <- read_excel("H:/My Documents/clash.xlsx",sheet = "Heros")
 
 #elixir costs were increase by two orders of magnitude for Dark Elixir(DE), to account for the rarity of DE.
 clash_troops$cost2 <- clash_troops$cost/clash_troops$housing
-clash_troops$damage_per_second2 <- clash_troops$damage_per_second/clash$housing
+clash_troops$damage_per_second2 <- clash_troops$damage_per_second/clash_troops$housing
 clash_troops$hitpoints2 <- clash_troops$hitpoints/clash_troops$housing
 
 
