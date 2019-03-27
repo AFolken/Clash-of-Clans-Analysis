@@ -1,0 +1,104 @@
+---
+title: "Clash Analysis"
+author: "Andrew"
+date: "March 27, 2019"
+output: 
+  html_document:
+    number_sections: yes
+    theme: united
+    highlight: tango
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    number_sections: yes
+    theme: united
+    highlight: tango
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+#Summary
+This is an exploratory data analysis (EDA) of clash of clans.
+
+#Loading Data
+##Load Data
+```{r setup,include=TRUE,message = FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+rm(list = ls())
+library(plotly)
+library(readxl)
+library(tidyverse)
+
+#elixir costs were increase by two orders of magnitude for Dark Elixir(DE), to account for the rarity of DE.
+clash_troops <- read_excel("H:/My Documents/clash.xlsx",sheet = "Troops")
+clash_defense <- read_excel("H:/My Documents/clash.xlsx",sheet = "Defense")
+clash_heros <- read_excel("H:/My Documents/clash.xlsx",sheet = "Heros")
+clash_buildings <- read_excel("H:/My Documents/clash.xlsx",sheet = "Buildings")
+```
+##Create New Fields
+
+Here I am dividing cost, damage, and hitpoints by housing space. Some troops take up more space than others so I thought it would be interesting to see.
+
+```{r,warning=FALSE}
+
+clash_troops$cost2 <- clash_troops$cost/clash_troops$housing
+clash_troops$damage_per_second2 <- clash_troops$damage_per_second/clash_troops$housing
+clash_troops$hitpoints2 <- clash_troops$hitpoints/clash_troops$housing
+
+```
+
+#Visualizations
+
+##Graphs
+
+First I made 3d graphs.
+
+```{r,warning=FALSE}
+
+plot_ly(clash_troops, x = ~damage_per_second, y = ~hitpoints, z = ~cost, color = ~troop, colors = c('#BF382A', '#0C4B8E')) %>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'Damage/Second'),
+                      yaxis = list(title = 'Hitpoints'),
+                      zaxis = list(title = 'Cost')))
+
+plot_ly(clash_troops, x = ~damage_per_second2, y = ~hitpoints2, z = ~cost2, color = ~troop) %>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'Damage/Second'),
+                      yaxis = list(title = 'Hitpoints'),
+                      zaxis = list(title = 'Cost')))
+
+plot_ly(clash_defense, x = ~damage_per_second, y = ~hitpoints, z = ~Range, color = ~building, colors = c('#BF382A', '#0C4B8E')) %>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'Damage/Second'),
+                      yaxis = list(title = 'Hitpoints'),
+                      zaxis = list(title = 'Range')))
+
+plot_ly(clash_heros, x = ~damage_per_second, y = ~hitpoints, z = ~Range, color = ~hero, colors = c('#BF382A', '#0C4B8E')) %>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'Damage/Second'),
+                      yaxis = list(title = 'Hitpoints'),
+                      zaxis = list(title = 'Range')))
+
+```
+
+Beautiful!
+
+
+```{R,include=TRUE,message = FALSE,warning=FALSE}
+
+buildingslist <- arrange(clash_buildings, -hitpoints)
+buildingsarray <- as.array(buildingslist$building)
+
+plot_ly(clash_buildings, x = ~building, y = ~hitpoints, color = ~hitpoints, type = 'bar',colors = c('#FAEF95','#B25C23','#9C171F' )) %>%
+  layout(title = 'Buildings by Hitpoints',xaxis = list(title = "Building",
+                                   categoryorder = "array",
+                                   categoryarray = buildingsarray),
+                      yaxis = list(title = 'Hitpoints'))
+
+```
+
+
+
