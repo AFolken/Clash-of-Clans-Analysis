@@ -56,18 +56,22 @@ colorscheme = c('#b50606','#fcd944','#0c6d63','#0b2a75','#572E8A')
 
 server <- function(input, output) {
   
-  # Generate a plot of the requested variable against mpg ----
-  # and only exclude outliers if requested
-  inputgraph <- reactive(input$variable)
+  datasetInput <- reactive({
+    switch(input$variable,
+           "clash_troops" = clash_troops,
+           "clash_troops2" = clash_troops2)
+  })
+  
   
   output$plot <- renderPlotly({
-    p <- plot_ly(clash_troops, x = ~damage_per_second, y = ~hitpoints, z = ~cost, color = ~troop, colors = colorscheme) %>%
+    p <- plot_ly(datasetInput(), x = ~damage_per_second, y = ~hitpoints, z = ~cost, color = ~troop, colors = colorscheme) %>%
                               add_markers() %>%
                               layout(title = 'Troops',
                                      scene = list(xaxis = list(title = 'Damage/Second'),
                                                   yaxis = list(title = 'Hitpoints'),
                                                   zaxis = list(title = 'Cost')))
                       })
+    
   
 }
 
