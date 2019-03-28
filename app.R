@@ -12,7 +12,7 @@ library(plotly)
 library(readxl)
 
 # Define UI for application that draws a histogram
-ui <- pageWithSidebar(
+ui <- fluidPage(
   
   # App title ----
   headerPanel("Clash Analysis"),
@@ -22,7 +22,7 @@ ui <- pageWithSidebar(
     
     # Input: Selector for variable to plot against mpg ----
     selectInput("variable", "Select Plot:", 
-                choices = c("clash_troops","clash_troops2"))
+                choices = c("Troops","Troops/Housing Space","Defense","Heros","Buildings"))
     
     # Input: Checkbox for whether outliers should be included ----
     #checkboxInput("outliers", "Show outliers", TRUE)
@@ -31,45 +31,83 @@ ui <- pageWithSidebar(
   
   # Main panel for displaying outputs ----
   mainPanel(
-    # Output: Formatted text for caption ----
-    # h3(textOutput("caption")),
-    
-    # Output: Plot of the requested variable against mpg ----
-    plotlyOutput("plot")
+    plotlyOutput("plot"),
+    width = 12
   )
 )
 
 # Data pre-processing ----
 
-clash_troops <- read_excel("clash.xlsx",sheet = "Troops")
-
-clash_troops2 <- clash_troops
-
-clash_troops2$cost <- clash_troops$cost/clash_troops$housing
-clash_troops2$damage_per_second <- clash_troops$damage_per_second/clash_troops$housing
-clash_troops2$hitpoints <- clash_troops$hitpoints/clash_troops$housing
+clash_troops <- read_excel("H:/My Documents/clash.xlsx",sheet = "Troops")
+clash_defense <- read_excel("H:/My Documents/clash.xlsx",sheet = "Defense")
+clash_heros <- read_excel("H:/My Documents/clash.xlsx",sheet = "Heros")
+clash_buildings <- read_excel("H:/My Documents/clash.xlsx",sheet = "Buildings")
 
 
+clash_troops$cost2 <- clash_troops$cost/clash_troops$housing
+clash_troops$damage_per_second2 <- clash_troops$damage_per_second/clash_troops$housing
+clash_troops$hitpoints2 <- clash_troops$hitpoints/clash_troops$housing
 
 colorscheme = c('#b50606','#fcd944','#0c6d63','#0b2a75','#572E8A')
+p <- plot_ly(clash_troops, x = ~damage_per_second, y = ~hitpoints, z = ~cost, color = ~troop, colors = colorscheme) %>%
+  add_markers() %>%
+  layout(title = 'Troops',
+         scene = list(xaxis = list(title = 'Damage/Second'),
+                      yaxis = list(title = 'Hitpoints'),
+                      zaxis = list(title = 'Cost')))
+
+
+#features including a 2 are calculated out of housing space required
+
+p2 <- plot_ly(clash_troops, x = ~damage_per_second2, y = ~hitpoints2, z = ~cost2, color = ~troop,colors = colorscheme) %>%
+  add_markers() %>%
+  layout(title = 'Troops by House Space',
+         scene = list(xaxis = list(title = 'Damage/Second'),
+                      yaxis = list(title = 'Hitpoints'),
+                      zaxis = list(title = 'Cost')))
+
+
+#buildings
+D <- plot_ly(clash_defense, x = ~damage_per_second, y = ~hitpoints, z = ~Range, color = ~building, colors = colorscheme) %>%
+  add_markers() %>%
+  layout(title = 'Defense',
+         scene = list(xaxis = list(title = 'Damage/Second'),
+                      yaxis = list(title = 'Hitpoints'),
+                      zaxis = list(title = 'Range')))
+
+
+H <- plot_ly(clash_heros, x = ~damage_per_second, y = ~hitpoints, z = ~Range, color = ~hero, colors = colorscheme) %>%
+  add_markers() %>%
+  layout(title = 'Heros',
+         scene = list(xaxis = list(title = 'Damage/Second'),
+                      yaxis = list(title = 'Hitpoints'),
+                      zaxis = list(title = 'Range')))
+
+buildingslist <- arrange(clash_buildings, -hitpoints)
+buildingsarray <- as.array(buildingslist$building)
+
+B <- plot_ly(clash_buildings, x = ~building, y = ~hitpoints, color = ~hitpoints, type = 'bar',colors = c('#FAEF95','#B25C23','#9C171F' )) %>%
+  layout(title = 'Buildings by Hitpoints',
+         xaxis = list(title = "Building",
+                      categoryorder = "array",
+                      categoryarray = buildingsarray),
+         yaxis = list(title = 'Hitpoints'))
 
 
 server <- function(input, output) {
   
   datasetInput <- reactive({
     switch(input$variable,
-           "clash_troops" = clash_troops,
-           "clash_troops2" = clash_troops2)
+           "Troops" = p,
+           "Troops/Housing Space" = p2,
+           "Defense" = D,
+           "Heros" = H,
+           "Buildings" = B)
   })
   
   
   output$plot <- renderPlotly({
-    p <- plot_ly(datasetInput(), x = ~damage_per_second, y = ~hitpoints, z = ~cost, color = ~troop, colors = colorscheme) %>%
-                              add_markers() %>%
-                              layout(title = 'Troops',
-                                     scene = list(xaxis = list(title = 'Damage/Second'),
-                                                  yaxis = list(title = 'Hitpoints'),
-                                                  zaxis = list(title = 'Cost')))
+    datasetInput()
                       })
     
   
